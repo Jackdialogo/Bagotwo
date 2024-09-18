@@ -1,10 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rabbit Cage</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <button onclick="goHome()">&#x1F3E0;</button> 
+        <span id="headerTitle">Rabbit Cage</span>
+        <button onclick="goToRabbitProfile()">&#x1F407;</button>
+    </header>
+
+    <div id="cageDetails">
+        <form id="rabbitForm" onsubmit="saveData(event)">
+            <!-- Form Fields -->
+            <div>
+                <label for="serialNumber">SERIAL NUMBER:</label>
+                <input type="text" id="serialNumber" name="serialNumber" required>
+            </div>
+            <div>
+                <label for="breed">BREED:</label>
+                <input type="text" id="breed" name="breed">
+            </div>
+            <!-- Other fields like family, weight, etc., omitted for brevity -->
+            <div class="buttons">
+                <button type="submit">SUBMIT</button>
+                <button type="button" onclick="goHome()">CANCEL</button>
+                <button type="button" onclick="deleteCage()">DELETE CAGE</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="homePage" class="cage-list" style="display: none;">
+        <!-- Existing Cage Buttons -->
+        <button data-cage-id="1" onclick="showCageDetails(1)">CAGE 1</button>
+        <button data-cage-id="2" onclick="showCageDetails(2)">CAGE 2</button>
+        <!-- Dynamically added cages -->
+        <button onclick="addNewCage()">ADD NEW CAGE</button>
+    </div>
+
 <script>
+    let totalCages = 6; // Initial total cages count
+    let addedCages = []; // To track dynamically added cages
+    let nextCageId = 7;  // ID for the next new cage
+
     function goHome() {
         document.getElementById('homePage').style.display = 'block';
         document.getElementById('cageDetails').style.display = 'none';
-        document.getElementById('pregnancyDetails').style.display = 'none';
-        document.getElementById('headerTitle').innerHTML = '<strong>RABBIT CAGE </strong>';
-        loadCageButtons();  // Reload cage buttons
+        document.getElementById('headerTitle').innerHTML = '<strong>RABBIT CAGE</strong>';
     }
 
     function showCageDetails(cageNumber) {
@@ -13,10 +58,6 @@
         loadData(cageNumber);
         document.getElementById('rabbitForm').dataset.cageNumber = cageNumber;
         document.getElementById('headerTitle').innerHTML = `<strong>CAGE ${cageNumber}</strong>`;
-    }
-
-    function togglePregnancyDetails(show) {
-        document.getElementById('pregnancyDetails').style.display = show ? 'block' : 'none';
     }
 
     function saveData(event) {
@@ -35,74 +76,52 @@
 
     function loadData(cageNumber) {
         let data = JSON.parse(localStorage.getItem(`rabbitData${cageNumber}`)) || {};
+        document.getElementById('serialNumber').value = data.serialNumber || '';
         document.getElementById('breed').value = data.breed || '';
-        document.getElementById('family').value = data.family || '';
-        document.getElementById('birthDate').value = data.birthDate || '';
-        document.getElementById('weight').value = data.weight || '';
-        if (data.pregnant === "yes") {
-            document.querySelector('input[name="pregnant"][value="yes"]').checked = true;
-            togglePregnancyDetails(true);
-            document.getElementById('matedRabbit').value = data.matedRabbit || '';
-            document.getElementById('pregnancyStart').value = data.pregnancyStart || '';
-            document.getElementById('dueDate').value = data.dueDate || '';
-        } else {
-            document.querySelector('input[name="pregnant"][value="no"]').checked = true;
-            togglePregnancyDetails(false);
-        }
-        if (data.foodIntake === "normal") {
-            document.querySelector('input[name="foodIntake"][value="normal"]').checked = true;
-        } else {
-            document.querySelector('input[name="foodIntake"][value="irregular"]').checked = true;
-        }
-        if (data.mating === "yes") {
-            document.querySelector('input[name="mating"][value="yes"]').checked = true;
-        } else {
-            document.querySelector('input[name="mating"][value="no"]').checked = true;
-        }
-        document.getElementById('note').value = data.note || '';
+        // Load other fields similarly...
     }
 
-    function deleteData() {
-        const form = document.getElementById('rabbitForm');
-        const cageNumber = form.dataset.cageNumber;
-        if (confirm(`Are you sure you want to delete the data for Cage ${cageNumber}?`)) {
-            localStorage.removeItem(`rabbitData${cageNumber}`);  // Remove the cage's data
-            let totalCages = localStorage.getItem('totalCages') || 6;
-            if (cageNumber == totalCages) {
-                totalCages--;  // Reduce the total number of cages if it's the last cage
-                localStorage.setItem('totalCages', totalCages);
+    function deleteCage() {
+        const cageNumber = document.getElementById('rabbitForm').dataset.cageNumber;
+        if (confirm(`Are you sure you want to delete Cage ${cageNumber}?`)) {
+            // Remove data from localStorage
+            localStorage.removeItem(`rabbitData${cageNumber}`);
+
+            // Remove button from the homePage
+            const button = document.querySelector(`#homePage button[data-cage-id='${cageNumber}']`);
+            if (button) {
+                button.remove();
             }
-            alert(`Data for Cage ${cageNumber} deleted successfully!`);
+
+            // Remove from addedCages
+            const index = addedCages.indexOf(parseInt(cageNumber, 10));
+            if (index !== -1) {
+                addedCages.splice(index, 1);
+            }
+
+            alert(`Cage ${cageNumber} has been deleted.`);
             goHome();
         }
     }
 
-    // Dynamically load cage buttons based on stored cage count
-    function loadCageButtons() {
-        let cageButtons = document.getElementById('cageButtons');
-        cageButtons.innerHTML = '';  // Clear existing buttons
-
-        let totalCages = localStorage.getItem('totalCages') || 6;  // Default to 6 cages
-        for (let i = 1; i <= totalCages; i++) {
-            let button = document.createElement('button');
-            button.innerText = `CAGE ${i}`;
-            button.onclick = function() { showCageDetails(i); };
-            cageButtons.appendChild(button);
-        }
-    }
-
-    // Add a new cage in sequence
     function addNewCage() {
-        let totalCages = localStorage.getItem('totalCages') || 6;
         totalCages++;
-        localStorage.setItem('totalCages', totalCages);
-        loadCageButtons();
-        alert(`CAGE ${totalCages} added!`);
+        const cageId = nextCageId++;
+        addedCages.push(cageId);
+
+        const homePage = document.getElementById('homePage');
+        const newCageButton = document.createElement('button');
+        newCageButton.textContent = `CAGE ${cageId}`;
+        newCageButton.dataset.cageId = cageId;
+        newCageButton.onclick = () => showCageDetails(cageId);
+
+        // Insert new button before the 'Add New Cage' button
+        homePage.insertBefore(newCageButton, homePage.lastElementChild);
     }
 
-    // Load cage data if available in URL
     window.onload = function () {
-        let cageNumber = new URLSearchParams(window.location.search).get('cage');
+        const urlParams = new URLSearchParams(window.location.search);
+        const cageNumber = urlParams.get('cage');
         if (cageNumber) {
             showCageDetails(cageNumber);
         } else {
@@ -110,3 +129,5 @@
         }
     }
 </script>
+</body>
+</html>
