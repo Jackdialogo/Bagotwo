@@ -8,48 +8,82 @@
 </head>
 <body>
     <header>
-        <button onclick="goHome()">&#x1F3E0;</button> 
+        <button onclick="goHome()">&#x1F3E0;</button>
         <span id="headerTitle">Rabbit Cage</span>
-        <button onclick="goToRabbitProfile()">&#x1F407;</button>
     </header>
 
     <div id="cageDetails">
         <form id="rabbitForm" onsubmit="saveData(event)">
-            <!-- Form Fields -->
-            <div>
-                <label for="serialNumber">SERIAL NUMBER:</label>
-                <input type="text" id="serialNumber" name="serialNumber" required>
-            </div>
             <div>
                 <label for="breed">BREED:</label>
                 <input type="text" id="breed" name="breed">
             </div>
-            <!-- Other fields like family, weight, etc., omitted for brevity -->
+            <div>
+                <label for="family">FAMILY:</label>
+                <input type="text" id="family" name="family">
+            </div>
+            <div>
+                <label for="birthDate">DATE OF BIRTH:</label>
+                <input type="date" id="birthDate" name="birthDate">
+            </div>
+            <div>
+                <label for="weight">WEIGHT:</label>
+                <input type="text" id="weight" name="weight">
+            </div>
+            <div>
+                <label>PREGNANT:</label>
+                <label><input type="radio" name="pregnant" value="yes" onclick="togglePregnancyDetails(true)"> YES</label>
+                <label><input type="radio" name="pregnant" value="no" onclick="togglePregnancyDetails(false)"> NO</label>
+            </div>
+            <div id="pregnancyDetails" style="display: none;">
+                <div>
+                    <label for="matedRabbit">MATED RABBIT:</label>
+                    <input type="text" id="matedRabbit" name="matedRabbit">
+                </div>
+                <div>
+                    <label for="pregnancyStart">START OF PREGNANCY:</label>
+                    <input type="date" id="pregnancyStart" name="pregnancyStart">
+                </div>
+                <div>
+                    <label for="dueDate">DUE DATE OF PREGNANCY:</label>
+                    <input type="date" id="dueDate" name="dueDate">
+                </div>
+            </div>
+            <div>
+                <label for="foodIntake">FOOD INTAKE:</label>
+                <label><input type="radio" name="foodIntake" value="normal"> NORMAL</label>
+                <label><input type="radio" name="foodIntake" value="irregular"> IRREGULAR</label>
+            </div>
+            <div>
+                <label>ELIGIBLE FOR MATING:</label>
+                <label><input type="radio" name="mating" value="yes"> YES</label>
+                <label><input type="radio" name="mating" value="no"> NO</label>
+            </div>
+            <div>
+                <label for="note">NOTE:</label>
+                <textarea id="note" name="note"></textarea>
+            </div>
             <div class="buttons">
                 <button type="submit">SUBMIT</button>
                 <button type="button" onclick="goHome()">CANCEL</button>
-                <button type="button" onclick="deleteCage()">DELETE CAGE</button>
+                <button type="button" onclick="deleteData()">DELETE</button>
             </div>
         </form>
     </div>
 
     <div id="homePage" class="cage-list" style="display: none;">
-        <!-- Existing Cage Buttons -->
-        <button onclick="showCageDetails(1)">CAGE 1</button>
-        <button onclick="showCageDetails(2)">CAGE 2</button>
-        <!-- Dynamically added cages -->
-        <button onclick="addNewCage()">ADD NEW CAGE</button>
+        <!-- Existing cages will be dynamically added here -->
+        <div id="cageButtons"></div>
+        <button onclick="addNewCage()">ADD NEW CAGE</button> <!-- Add new cage button -->
     </div>
 
 <script>
-    let totalCages = 6; // Initial total cages count
-    let addedCages = []; // To track dynamically added cages
-    let nextCageId = 7;  // This will ensure new cages get unique IDs
-
     function goHome() {
         document.getElementById('homePage').style.display = 'block';
         document.getElementById('cageDetails').style.display = 'none';
-        document.getElementById('headerTitle').innerHTML = '<strong>RABBIT CAGE</strong>';
+        document.getElementById('pregnancyDetails').style.display = 'none';
+        document.getElementById('headerTitle').innerHTML = '<strong>RABBIT CAGE </strong>';
+        loadCageButtons();
     }
 
     function showCageDetails(cageNumber) {
@@ -58,6 +92,10 @@
         loadData(cageNumber);
         document.getElementById('rabbitForm').dataset.cageNumber = cageNumber;
         document.getElementById('headerTitle').innerHTML = `<strong>CAGE ${cageNumber}</strong>`;
+    }
+
+    function togglePregnancyDetails(show) {
+        document.getElementById('pregnancyDetails').style.display = show ? 'block' : 'none';
     }
 
     function saveData(event) {
@@ -76,47 +114,69 @@
 
     function loadData(cageNumber) {
         let data = JSON.parse(localStorage.getItem(`rabbitData${cageNumber}`)) || {};
-        document.getElementById('serialNumber').value = data.serialNumber || '';
         document.getElementById('breed').value = data.breed || '';
-        // Load other fields in the same way...
+        document.getElementById('family').value = data.family || '';
+        document.getElementById('birthDate').value = data.birthDate || '';
+        document.getElementById('weight').value = data.weight || '';
+        if (data.pregnant === "yes") {
+            document.querySelector('input[name="pregnant"][value="yes"]').checked = true;
+            togglePregnancyDetails(true);
+            document.getElementById('matedRabbit').value = data.matedRabbit || '';
+            document.getElementById('pregnancyStart').value = data.pregnancyStart || '';
+            document.getElementById('dueDate').value = data.dueDate || '';
+        } else {
+            document.querySelector('input[name="pregnant"][value="no"]').checked = true;
+            togglePregnancyDetails(false);
+        }
+        if (data.foodIntake === "normal") {
+            document.querySelector('input[name="foodIntake"][value="normal"]').checked = true;
+        } else {
+            document.querySelector('input[name="foodIntake"][value="irregular"]').checked = true;
+        }
+        if (data.mating === "yes") {
+            document.querySelector('input[name="mating"][value="yes"]').checked = true;
+        } else {
+            document.querySelector('input[name="mating"][value="no"]').checked = true;
+        }
+        document.getElementById('note').value = data.note || '';
     }
 
-    function deleteCage() {
-        const cageNumber = document.getElementById('rabbitForm').dataset.cageNumber;
-        if (confirm(`Are you sure you want to delete Cage ${cageNumber}?`)) {
-            // Remove data from localStorage
+    function deleteData() {
+        const form = document.getElementById('rabbitForm');
+        const cageNumber = form.dataset.cageNumber;
+        if (confirm(`Are you sure you want to delete the data for Cage ${cageNumber}?`)) {
             localStorage.removeItem(`rabbitData${cageNumber}`);
-
-            // Find and remove the button associated with this cage
-            const cageButton = document.querySelector(`#homePage button[data-cage-id='${cageNumber}']`);
-            if (cageButton) {
-                cageButton.remove();
-            }
-
-            alert(`Cage ${cageNumber} has been deleted.`);
+            alert(`Data for Cage ${cageNumber} deleted successfully!`);
             goHome();
         }
     }
 
-    function addNewCage() {
-        // Create a new cage button with a unique ID
-        const homePage = document.getElementById('homePage');
-        const newCageButton = document.createElement('button');
-        newCageButton.textContent = `CAGE ${nextCageId}`;
-        newCageButton.dataset.cageId = nextCageId; // Unique ID for the new cage
-        newCageButton.onclick = () => showCageDetails(nextCageId);
+    // Dynamically load cage buttons based on stored cage count
+    function loadCageButtons() {
+        let cageButtons = document.getElementById('cageButtons');
+        cageButtons.innerHTML = '';  // Clear existing buttons
 
-        // Insert new button before the 'Add New Cage' button
-        homePage.insertBefore(newCageButton, homePage.lastElementChild);
-
-        // Track this new cage
-        addedCages.push(nextCageId);
-        nextCageId++; // Increment ID for future cages
+        let totalCages = localStorage.getItem('totalCages') || 6;  // Default to 6 cages
+        for (let i = 1; i <= totalCages; i++) {
+            let button = document.createElement('button');
+            button.innerText = `CAGE ${i}`;
+            button.onclick = function() { showCageDetails(i); };
+            cageButtons.appendChild(button);
+        }
     }
 
+    // Add a new cage in sequence
+    function addNewCage() {
+        let totalCages = localStorage.getItem('totalCages') || 6;
+        totalCages++;
+        localStorage.setItem('totalCages', totalCages);
+        loadCageButtons();
+        alert(`CAGE ${totalCages} added!`);
+    }
+
+    // Load cage data if available in URL
     window.onload = function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const cageNumber = urlParams.get('cage');
+        let cageNumber = new URLSearchParams(window.location.search).get('cage');
         if (cageNumber) {
             showCageDetails(cageNumber);
         } else {
@@ -124,5 +184,6 @@
         }
     }
 </script>
+
 </body>
 </html>
