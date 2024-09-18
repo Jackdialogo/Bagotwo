@@ -1,89 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rabbit Cage</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <header>
-        <button onclick="goHome()">&#x1F3E0;</button>
-        <span id="headerTitle">Rabbit Cage</span>
-    </header>
-
-    <div id="cageDetails">
-        <form id="rabbitForm" onsubmit="saveData(event)">
-            <div>
-                <label for="breed">BREED:</label>
-                <input type="text" id="breed" name="breed">
-            </div>
-            <div>
-                <label for="family">FAMILY:</label>
-                <input type="text" id="family" name="family">
-            </div>
-            <div>
-                <label for="birthDate">DATE OF BIRTH:</label>
-                <input type="date" id="birthDate" name="birthDate">
-            </div>
-            <div>
-                <label for="weight">WEIGHT:</label>
-                <input type="text" id="weight" name="weight">
-            </div>
-            <div>
-                <label>PREGNANT:</label>
-                <label><input type="radio" name="pregnant" value="yes" onclick="togglePregnancyDetails(true)"> YES</label>
-                <label><input type="radio" name="pregnant" value="no" onclick="togglePregnancyDetails(false)"> NO</label>
-            </div>
-            <div id="pregnancyDetails" style="display: none;">
-                <div>
-                    <label for="matedRabbit">MATED RABBIT:</label>
-                    <input type="text" id="matedRabbit" name="matedRabbit">
-                </div>
-                <div>
-                    <label for="pregnancyStart">START OF PREGNANCY:</label>
-                    <input type="date" id="pregnancyStart" name="pregnancyStart">
-                </div>
-                <div>
-                    <label for="dueDate">DUE DATE OF PREGNANCY:</label>
-                    <input type="date" id="dueDate" name="dueDate">
-                </div>
-            </div>
-            <div>
-                <label for="foodIntake">FOOD INTAKE:</label>
-                <label><input type="radio" name="foodIntake" value="normal"> NORMAL</label>
-                <label><input type="radio" name="foodIntake" value="irregular"> IRREGULAR</label>
-            </div>
-            <div>
-                <label>ELIGIBLE FOR MATING:</label>
-                <label><input type="radio" name="mating" value="yes"> YES</label>
-                <label><input type="radio" name="mating" value="no"> NO</label>
-            </div>
-            <div>
-                <label for="note">NOTE:</label>
-                <textarea id="note" name="note"></textarea>
-            </div>
-            <div class="buttons">
-                <button type="submit">SUBMIT</button>
-                <button type="button" onclick="goHome()">CANCEL</button>
-                <button type="button" onclick="deleteData()">DELETE</button>
-            </div>
-        </form>
-    </div>
-
-    <div id="homePage" class="cage-list" style="display: none;">
-        <!-- Existing cages will be dynamically added here -->
-        <div id="cageButtons"></div>
-        <button onclick="addNewCage()">ADD NEW CAGE</button> <!-- Add new cage button -->
-    </div>
-
 <script>
     function goHome() {
         document.getElementById('homePage').style.display = 'block';
         document.getElementById('cageDetails').style.display = 'none';
         document.getElementById('pregnancyDetails').style.display = 'none';
         document.getElementById('headerTitle').innerHTML = '<strong>RABBIT CAGE </strong>';
-        loadCageButtons();
+        loadCageButtons();  // Reload cage buttons
     }
 
     function showCageDetails(cageNumber) {
@@ -145,7 +66,12 @@
         const form = document.getElementById('rabbitForm');
         const cageNumber = form.dataset.cageNumber;
         if (confirm(`Are you sure you want to delete the data for Cage ${cageNumber}?`)) {
-            localStorage.removeItem(`rabbitData${cageNumber}`);
+            localStorage.removeItem(`rabbitData${cageNumber}`);  // Remove the cage's data
+            let totalCages = localStorage.getItem('totalCages') || 6;
+            if (cageNumber == totalCages) {
+                totalCages--;  // Reduce the total number of cages if it's the last cage
+                localStorage.setItem('totalCages', totalCages);
+            }
             alert(`Data for Cage ${cageNumber} deleted successfully!`);
             goHome();
         }
@@ -184,6 +110,3 @@
         }
     }
 </script>
-
-</body>
-</html>
